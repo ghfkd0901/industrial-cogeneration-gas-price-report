@@ -30,14 +30,8 @@ CUSTOM_CSS = """
     max-width: 100% !important;
 }
 
-/* 사이드바 버튼 유지를 위해 화면에서는 header/footer 보임 (인쇄시 숨김) */
-footer {
-    display: none !important;
-}
-
-body {
-    background-color: #eeeeee;
-}
+footer { display: none !important; }
+body { background-color: #eeeeee; }
 
 /* 2. A4 용지 레이아웃 정의 */
 .report-container {
@@ -55,141 +49,42 @@ body {
 }
 
 /* 3. 헤더 및 텍스트 스타일 */
-.report-header {
-    margin-bottom: 25px;
-    text-align: center;
-}
-.report-title-main {
-    font-size: 22pt;
-    font-weight: 800;
-    letter-spacing: -0.5px;
-    margin-bottom: 8px;
-}
-.report-title-sub {
-    font-size: 13pt;
-    font-weight: 500;
-    color: #555;
-    margin-bottom: 15px;
-}
-.report-meta-right {
-    font-size: 10pt;
-    color: #777;
-    text-align: right;
-    border-bottom: 2px solid #222;
-    padding-bottom: 8px;
-}
+.report-header { margin-bottom: 25px; text-align: center; }
+.report-title-main { font-size: 22pt; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 8px; }
+.report-title-sub { font-size: 13pt; font-weight: 500; color: #555; margin-bottom: 15px; }
+.report-meta-right { font-size: 10pt; color: #777; text-align: right; border-bottom: 2px solid #222; padding-bottom: 8px; }
 
-.section-title {
-    font-size: 13pt;
-    font-weight: 700;
-    margin-top: 25px;
-    margin-bottom: 8px;
-    border-left: 5px solid #0055b8;
-    padding-left: 10px;
-}
-.section-caption {
-    font-size: 10pt;
-    color: #666;
-    margin-bottom: 10px;
-}
+.section-title { font-size: 13pt; font-weight: 700; margin-top: 25px; margin-bottom: 8px; border-left: 5px solid #0055b8; padding-left: 10px; }
+.section-caption { font-size: 10pt; color: #666; margin-bottom: 10px; }
 
 /* 4. 테이블 스타일 */
-.styled-table {
-    border-collapse: collapse;
-    width: 100%;
-    font-size: 10.5pt;
-    margin-bottom: 20px;
-    table-layout: fixed;
-}
-.styled-table thead tr {
-    background-color: #f0f4f8;
-    border-top: 2px solid #444;
-    border-bottom: 1px solid #444;
-}
-.styled-table th,
-.styled-table td {
-    border: 1px solid #e0e0e0;
-    padding: 10px 5px;
-    text-align: right;
-    vertical-align: middle;
-}
-.styled-table th {
-    font-weight: 600;
-    color: #333;
-    text-align: center;
-    background-color: #f4f4f8;
-}
+.styled-table { border-collapse: collapse; width: 100%; font-size: 10.5pt; margin-bottom: 20px; table-layout: fixed; }
+.styled-table thead tr { background-color: #f0f4f8; border-top: 2px solid #444; border-bottom: 1px solid #444; }
+.styled-table th, .styled-table td { border: 1px solid #e0e0e0; padding: 10px 5px; text-align: right; vertical-align: middle; }
+.styled-table th { font-weight: 600; color: #333; text-align: center; background-color: #f4f4f8; }
 
-/* 열 너비 및 줄바꿈 설정 */
-.styled-table th:nth-child(1), .styled-table td:nth-child(1) { 
-    width: 28%; 
-    text-align: left; 
-    padding-left: 15px; 
-    background-color: #fafafa; 
-    font-weight: 600;
-    white-space: nowrap; 
-}
+.styled-table th:nth-child(1), .styled-table td:nth-child(1) { width: 28%; text-align: left; padding-left: 15px; background-color: #fafafa; font-weight: 600; white-space: nowrap; }
 .styled-table th:nth-child(2), .styled-table td:nth-child(2) { width: 18%; }
 .styled-table th:nth-child(3), .styled-table td:nth-child(3) { width: 18%; }
 .styled-table th:nth-child(4), .styled-table td:nth-child(4) { width: 20%; }
 .styled-table th:nth-child(5), .styled-table td:nth-child(5) { width: 16%; }
 
-
 /* 5. 푸터 주석 */
-.footer-note {
-    margin-top: auto;
-    padding-top: 20px;
-    border-top: 1px solid #eee;
-    font-size: 9pt;
-    color: #888;
-    line-height: 1.5;
-}
-.footer-note strong {
-    color: #e74c3c;
-}
-.footer-note a {
-    color: #2980b9;
-    text-decoration: none;
-}
+.footer-note { margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; font-size: 9pt; color: #888; line-height: 1.5; }
+.footer-note strong { color: #e74c3c; }
+.footer-note a { color: #2980b9; text-decoration: none; }
 
-/* 6. [핵심] 인쇄 설정 - 사이드바 숨기기 */
+/* 6. 인쇄 설정 */
 @media print {
-    @page {
-        size: A4 portrait;
-        margin: 0;
-    }
-    html, body {
-        height: 100%;
-        margin: 0 !important;
-        padding: 0 !important;
-        overflow: hidden;
-    }
-    
-    /* 사이드바(stSidebar), 헤더, 푸터, 배포버튼 숨김 */
-    section[data-testid="stSidebar"], header, footer, .stDeployButton {
-        display: none !important;
-    }
-
-    .block-container {
-        padding: 0 !important;
-        margin: 0 !important;
-    }
-    
-    /* 보고서 컨테이너만 출력 */
-    .report-container {
-        width: 210mm;
-        height: 296mm;
-        box-shadow: none;
-        margin: 0;
-        padding: 15mm;
-        border: none;
-        page-break-inside: avoid;
-    }
+    @page { size: A4 portrait; margin: 0; }
+    html, body { height: 100%; margin: 0 !important; padding: 0 !important; overflow: hidden; }
+    section[data-testid="stSidebar"], header, footer, .stDeployButton { display: none !important; }
+    .block-container { padding: 0 !important; margin: 0 !important; }
+    .report-container { width: 210mm; height: 296mm; box-shadow: none; margin: 0; padding: 15mm; border: none; page-break-inside: avoid; }
 }
 </style>
 """
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
-
 
 # -----------------------------
 # 데이터 로드 및 함수
@@ -229,14 +124,12 @@ def safe_pct(now, prev):
 def fmt2(x): return "" if pd.isna(x) else f"{x:,.2f}"
 def fmt2_money(x): return "" if pd.isna(x) else f"{x:,.2f}"
 
-
 # -----------------------------
 # 사이드바 설정 & 인쇄 버튼
 # -----------------------------
 df = load_data()
 df["연월"] = df["Date"].dt.to_period("M").astype(str)
 
-# 데이터가 있는 달만 필터링
 valid_df = df[df["산업용_원/MJ"].notna()]
 ym_options = sorted(valid_df["연월"].unique(), reverse=True)
 
@@ -244,55 +137,38 @@ today = date.today()
 current_ym = today.strftime("%Y-%m")
 default_index = ym_options.index(current_ym) if current_ym in ym_options else 0
 
-# [사이드바 구성]
 with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
     
-    st.markdown("---") # 구분선
-    st.markdown("### 🖨 보고서 인쇄")
-    st.markdown("아래 버튼을 누르면 보고서만 깔끔하게 인쇄됩니다.")
+    # [추가됨] 기준열량 입력 받기 (이 값으로 전월/당월 모두 곱함)
+    # 초기값은 선택된 달의 열량 데이터 사용
+    기준일 = pd.to_datetime(selected_ym + "-01")
+    당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
     
-    # [인쇄 버튼 자바스크립트] - 사이드바 안에 배치
+    if row_now is not None:
+        default_cal = row_now["열량"] if pd.notna(row_now["열량"]) else 42.0
+    else:
+        default_cal = 42.0
+        
+    st.markdown("---")
+    st.markdown("### 🔥 기준열량 변경")
+    input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
+    st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
+
+    st.markdown("---")
+    st.markdown("### 🖨 보고서 인쇄")
     components.html(
         """
-        <script>
-            function printPage() {
-                window.parent.print();
-            }
-        </script>
+        <script> function printPage() { window.parent.print(); } </script>
         <style>
-            .print-btn {
-                width: 100%; /* 사이드바 꽉 차게 */
-                background-color: #333;
-                color: white;
-                border: none;
-                padding: 12px 0;
-                border-radius: 8px;
-                font-size: 16px;
-                font-weight: bold;
-                cursor: pointer;
-                font-family: "맑은 고딕", sans-serif;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 8px;
-                transition: background-color 0.2s;
-            }
-            .print-btn:hover {
-                background-color: #555;
-            }
+            .print-btn { width: 100%; background-color: #333; color: white; border: none; padding: 12px 0; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; font-family: "맑은 고딕", sans-serif; display: flex; align-items: center; justify-content: center; gap: 8px; transition: background-color 0.2s; }
+            .print-btn:hover { background-color: #555; }
         </style>
-        <button class="print-btn" onclick="printPage()">
-            🖨️ 인쇄하기
-        </button>
+        <button class="print-btn" onclick="printPage()">🖨️ 인쇄하기</button>
         """,
         height=60
     )
-
-# 데이터 처리
-기준일 = pd.to_datetime(selected_ym + "-01")
-당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
 
 if row_now is None:
     st.error(f"{당월일.date()} 데이터가 없습니다.")
@@ -301,11 +177,9 @@ if row_prev is None:
     st.warning(f"전월({전월일.date()}) 데이터가 없어 증감 계산 일부 공백일 수 있습니다.")
 today_str = today.strftime("%Y-%m-%d")
 
-
 # -----------------------------
-# 데이터 가공 (메인 로직)
+# 데이터 가공
 # -----------------------------
-# Table 1 (원/MJ)
 산업용_prev = row_prev["산업용_원/MJ"] if row_prev is not None else None
 산업용_now = row_now["산업용_원/MJ"]
 유가_prev = row_prev["적용유가"] if row_prev is not None else None
@@ -319,7 +193,6 @@ rows = [
     ["기준환율 (원/$)", 환율_prev, 환율_now],
 ]
 table1 = pd.DataFrame(rows, columns=["용도", "전월(원/MJ)", "당월(원/MJ)"])
-
 table1["증감(원/MJ)"] = [safe_diff(n, p) for p, n in zip(table1["전월(원/MJ)"], table1["당월(원/MJ)"])]
 table1["증감(%)"] = [safe_pct(n, p) for p, n in zip(table1["전월(원/MJ)"], table1["당월(원/MJ)"])]
 
@@ -327,15 +200,9 @@ table1_disp = table1.copy()
 for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
     table1_disp[col] = table1_disp[col].apply(fmt2)
 
-# Table 2 (원/m3)
-열량_now = row_now["열량"]
-if row_prev is not None:
-    열량_prev = row_prev["열량"]
-    가격_m3_prev = 산업용_prev * 열량_prev if 산업용_prev is not None else None
-else:
-    열량_prev = None; 가격_m3_prev = None
-
-가격_m3_now = 산업용_now * 열량_now
+# [수정됨] 루베(m3) 환산 로직: 사용자가 입력한 input_cal 값을 양쪽에 동일하게 곱함
+가격_m3_prev = 산업용_prev * input_cal if 산업용_prev is not None else None
+가격_m3_now = 산업용_now * input_cal
 증감_m3 = safe_diff(가격_m3_now, 가격_m3_prev)
 증감_pct_m3 = safe_pct(가격_m3_now, 가격_m3_prev)
 
@@ -350,16 +217,12 @@ table2_disp = table2.copy()
 for c in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
     table2_disp[c] = table2_disp[c].apply(fmt2_money)
 
-
 # -----------------------------
-# HTML 조립 (메인 컨텐츠)
+# HTML 조립
 # -----------------------------
 report_html = ""
-
-# Container Open
 report_html += '<div class="report-container">'
 
-# Header
 report_html += f"""<div class="report-header">
 <div class="report-title-main">대성에너지 도시가스 요금 보고서</div>
 <div class="report-title-sub">산업용 요금 단가 변동 현황</div>
@@ -369,24 +232,22 @@ report_html += f"""<div class="report-header">
 </div>
 </div>"""
 
-# Section 1
 report_html += """<div class="section-title">1. 단위: 원/MJ (VAT별도)</div>
 <div class="section-caption">
 산업용 요금 및 기준유가·환율의 전월 대비 변동 현황입니다.
 </div>"""
 report_html += table1_disp.to_html(classes="styled-table", index=False)
 
-# Section 2
 report_html += """<div class="section-title">2. 단위: 원/㎥</div>
 <div class="section-caption">
 매월 열량 변경으로 인한 오차가 존재할 수 있어, 참고용으로만 활용하시기 바랍니다.
 </div>"""
-report_html += f"<div class='section-caption'>기준열량: <strong>{열량_now:,.3f} MJ/㎥</strong></div>"
+# [수정됨] 입력된 기준열량 표시
+report_html += f"<div class='section-caption'>기준열량: <strong>{input_cal:,.3f} MJ/㎥</strong> (설정값 적용)</div>"
 report_html += table2_disp.to_html(classes="styled-table", index=False)
 
-# Footer
 report_html += """<div class="footer-note">
-※ <strong>주의</strong> : 원/㎥ 단위 요금은 기준열량으로 환산한 추정치로, 실제 검침 열량과 차이가 발생할 수 있습니다.<br/>
+※ <strong>주의</strong> : 원/㎥ 단위 요금은 설정된 기준열량({cal} MJ/㎥)으로 환산한 값입니다.<br/>
 ※ 도시가스 요금단가 안내:
 <a href="https://cyber.daesungenergy.com/charge/pricetable" target="_blank">
 https://cyber.daesungenergy.com/charge/pricetable
@@ -395,9 +256,7 @@ https://cyber.daesungenergy.com/charge/pricetable
 <a href="https://cyber.daesungenergy.com/charge/solvAvgMJ" target="_blank">
 https://cyber.daesungenergy.com/charge/solvAvgMJ
 </a>
-</div>"""
+</div>""".format(cal=f"{input_cal:,.3f}")
 
-# Container Close
 report_html += "</div>"
-
 st.markdown(report_html, unsafe_allow_html=True)

@@ -198,7 +198,6 @@ st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 def load_data() -> pd.DataFrame:
     df = pd.read_csv(CSV_URL)
     df["Date"] = pd.to_datetime(df["Date"])
-
     num_cols = [
         "원/㎥", "열량", "원료비", "가스공사 공급비용", "대성에너지 공급비용",
         "산업용_원/MJ", "미수금", "연료전지(MJ)", "열병합(MJ)",
@@ -209,30 +208,24 @@ def load_data() -> pd.DataFrame:
             df[c] = pd.to_numeric(df[c], errors="coerce")
     return df
 
-
 def get_month_rows(df: pd.DataFrame, 기준일):
     기준일_ts = pd.to_datetime(기준일)
     당월일 = 기준일_ts.replace(day=1)
     전월일 = 당월일 - DateOffset(months=1)
-
     row_now = df[df["Date"] == 당월일]
     row_prev = df[df["Date"] == 전월일]
-
     row_now = None if row_now.empty else row_now.iloc[0]
     row_prev = None if row_prev.empty else row_prev.iloc[0]
     return 당월일, 전월일, row_now, row_prev
-
 
 def safe_diff(now, prev):
     if pd.isna(now) or pd.isna(prev): return None
     return now - prev
 
-
 def safe_pct(now, prev):
     if pd.isna(now) or pd.isna(prev) or prev == 0: return None
     return (now / prev - 1) * 100
 
-# 소수점 2자리 통일
 def fmt2(x): return "" if pd.isna(x) else f"{x:,.2f}"
 def fmt2_money(x): return "" if pd.isna(x) else f"{x:,.2f}"
 
@@ -243,7 +236,7 @@ def fmt2_money(x): return "" if pd.isna(x) else f"{x:,.2f}"
 df = load_data()
 df["연월"] = df["Date"].dt.to_period("M").astype(str)
 
-# [데이터 필터링] '열병합(MJ)' 데이터가 있는 행만 추출 (미래 날짜 숨김)
+# [데이터 필터링] '열병합(MJ)' 데이터가 있는 행만 추출
 valid_df = df[df["열병합(MJ)"].notna()]
 ym_options = sorted(valid_df["연월"].unique(), reverse=True)
 
@@ -256,11 +249,27 @@ with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
     
-    st.markdown("---") # 구분선
+    # [추가됨] 기준열량 입력 받기
+    # 1. 먼저 선택된 달의 데이터를 가져와서 기본값(default_cal)을 설정
+    기준일 = pd.to_datetime(selected_ym + "-01")
+    당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
+
+    if row_now is not None:
+        default_cal = row_now["열량"] if pd.notna(row_now["열량"]) else 42.0
+    else:
+        default_cal = 42.0
+
+    st.markdown("---")
+    st.markdown("### 🔥 기준열량 변경")
+    # 사용자 입력 (기본값: 당월 데이터 상의 열량)
+    input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
+    st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
+    
+    st.markdown("---")
     st.markdown("### 🖨 보고서 인쇄")
     st.markdown("아래 버튼을 누르면 보고서만 깔끔하게 인쇄됩니다.")
     
-    # [인쇄 버튼 자바스크립트] - 사이드바 안에 배치
+    # [인쇄 버튼 자바스크립트]
     components.html(
         """
         <script>
@@ -297,10 +306,7 @@ with st.sidebar:
         height=60
     )
 
-# 데이터 처리
-기준일 = pd.to_datetime(selected_ym + "-01")
-당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
-
+# 데이터 처리 (사이드바 밖에서 예외처리)
 if row_now is None:
     st.error(f"{당월일.date()} 데이터가 없습니다.")
     st.stop()
@@ -343,9 +349,8 @@ for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
     table1_disp[col] = table1_disp[col].apply(fmt2)
 
 
-# Table 2 (원/㎥)
+# Table 2 (원/㎥) - [수정됨] 입력된 기준열량(input_cal) 적용
 열량_now = row_now["열량"]
-열량_prev = row_prev["열량"] if row_prev is not None else None
 
 rows_m3 = []
 # 열병합, 자가열전용만 m3 계산
@@ -353,11 +358,9 @@ for label, col in [("열병합", "열병합(MJ)"), ("자가열전용", "자가�
     now_rate_mj = row_now[col]
     prev_rate_mj = row_prev[col] if row_prev is not None else None
 
-    prev_m3 = None
-    if (열량_prev is not None) and (prev_rate_mj is not None):
-        prev_m3 = prev_rate_mj * 열량_prev
-
-    now_m3 = now_rate_mj * 열량_now
+    # [핵심 로직 변경] 전월과 당월 모두 '입력된 기준열량'을 곱해서 환산
+    prev_m3 = prev_rate_mj * input_cal if prev_rate_mj is not None else None
+    now_m3 = now_rate_mj * input_cal
     
     rows_m3.append([
         label,
@@ -404,12 +407,14 @@ report_html += """<div class="section-title">2. 단위: 원/㎥</div>
 <div class="section-caption">
 기준열량을 적용한 추정치로, 실제 열량 변동에 따라 차이가 발생할 수 있습니다.
 </div>"""
-report_html += f"<div class='section-caption'>기준열량: <strong>{열량_now:,.3f} MJ/㎥</strong></div>"
+
+# [수정됨] 설정값 적용 표시
+report_html += f"<div class='section-caption'>기준열량: <strong>{input_cal:,.3f} MJ/㎥</strong> (설정값 적용)</div>"
 report_html += table2_disp.to_html(classes="styled-table", index=False)
 
 # Footer
 report_html += """<div class="footer-note">
-※ <strong>주의</strong> : 원/㎥ 단위 요금은 기준열량으로 환산한 추정치로, 실제 검침 열량과 차이가 발생할 수 있습니다.<br/>
+※ <strong>주의</strong> : 원/㎥ 단위 요금은 설정된 기준열량({cal} MJ/㎥)으로 환산한 값입니다.<br/>
 ※ 도시가스 요금단가 안내:
 <a href="https://cyber.daesungenergy.com/charge/pricetable" target="_blank">
 https://cyber.daesungenergy.com/charge/pricetable
@@ -419,7 +424,7 @@ https://cyber.daesungenergy.com/charge/pricetable
 https://cyber.daesungenergy.com/charge/solvAvgMJ
 </a><br/>
 ※ 문의: 대성에너지 마케팅팀 053-606-1317
-</div>"""
+</div>""".format(cal=f"{input_cal:,.3f}")
 
 # Container Close
 report_html += "</div>"
