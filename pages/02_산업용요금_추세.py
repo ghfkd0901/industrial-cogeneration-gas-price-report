@@ -7,8 +7,8 @@ import plotly.graph_objects as go
 # 기본 설정
 # -----------------------------
 st.set_page_config(
-    page_title="도시가스 vs LPG 요금 비교",
-    layout="wide",  # wide 화면
+    page_title="도시가스 산업용 vs LPG 요금 비교",
+    layout="wide",
 )
 
 CSV_URL = (
@@ -124,7 +124,7 @@ x_vals = plot_df["연월"].astype(str)
 x_vals_list = list(x_vals)  # 기준선용
 
 # -----------------------------
-# 비율 계산 (LPG / 도시가스)
+# 비율 계산 (LPG / 도시가스 산업용)
 # -----------------------------
 ratio = y_lpg / y_city.replace({0: np.nan})
 ratio = ratio.replace([np.inf, -np.inf], np.nan)
@@ -134,31 +134,31 @@ customdata = np.stack([y_city, y_lpg], axis=-1)
 
 hover_tmpl = (
     "연월 : %{x}<br>"
-    "도시가스 요금 : %{customdata[0]:,.2f} " + y_unit + "<br>"
+    "도시가스 산업용 요금 : %{customdata[0]:,.2f} " + y_unit + "<br>"
     "LPG 요금 : %{customdata[1]:,.2f} " + y_unit + "<extra></extra>"
 )
 
 # -----------------------------
-# 1) 단가 그래프 (도시가스 vs LPG)
+# 1) 단가 그래프 (도시가스 산업용 vs LPG)
 # -----------------------------
-st.title("도시가스 vs LPG 요금 비교 그래프")
+st.title("도시가스 산업용 vs LPG 요금 비교 그래프")
 st.caption("단위: " + y_unit)
 
 fig = go.Figure()
 
-# ✅ 도시가스 trace 하나에만 hovertemplate + customdata
+# 도시가스 산업용 trace (툴팁 담당)
 fig.add_trace(
     go.Scatter(
         x=x_vals,
         y=y_city,
         mode="lines+markers",
-        name="도시가스 요금",
+        name="도시가스 산업용 요금",
         customdata=customdata,
         hovertemplate=hover_tmpl,
     )
 )
 
-# ✅ LPG trace는 hoverinfo='skip'으로 툴팁 표시 안 함 (박스 하나만 뜨게)
+# LPG trace (선/점만, 툴팁은 스킵)
 fig.add_trace(
     go.Scatter(
         x=x_vals,
@@ -181,13 +181,13 @@ fig.update_xaxes(tickangle=-45)
 st.plotly_chart(fig, use_container_width=True)
 
 # -----------------------------
-# 2) 비율 그래프 (LPG / 도시가스)
+# 2) 비율 그래프 (LPG / 도시가스 산업용)
 # -----------------------------
-st.subheader("LPG / 도시가스 요금 비율")
+st.subheader("LPG / 도시가스 산업용 요금 비율")
 
 ratio_hover = (
     "연월 : %{x}<br>"
-    "비율(LPG ÷ 도시가스) : %{y:.3f} 배<extra></extra>"
+    "비율(LPG ÷ 도시가스 산업용) : %{y:.3f} 배<extra></extra>"
 )
 
 fig_ratio = go.Figure()
@@ -197,7 +197,7 @@ fig_ratio.add_trace(
         x=x_vals,
         y=ratio,
         mode="lines+markers",
-        name="LPG / 도시가스 비율",
+        name="LPG / 도시가스 산업용 비율",
         hovertemplate=ratio_hover,
     )
 )
@@ -231,7 +231,7 @@ if len(x_vals_list) > 0:
 
 fig_ratio.update_layout(
     xaxis_title="연월",
-    yaxis_title="배 (LPG ÷ 도시가스)",
+    yaxis_title="배 (LPG ÷ 도시가스 산업용)",
     hovermode="x",
     margin=dict(l=40, r=20, t=40, b=40),
 )
@@ -244,22 +244,22 @@ st.plotly_chart(fig_ratio, use_container_width=True)
 # -----------------------------
 table_df = pd.DataFrame({
     "연월": x_vals,
-    f"도시가스요금({y_unit})": y_city,
+    f"도시가스산업용요금({y_unit})": y_city,
     f"LPG요금({y_unit})": y_lpg,
-    "비율(LPG/도시가스)": ratio,
+    "비율(LPG/도시가스산업용)": ratio,
 })
 
 with st.expander("📊 데이터 테이블 열기 / 닫기", expanded=False):
     st.dataframe(
         table_df.style.format({
-            f"도시가스요금({y_unit})": "{:,.2f}",
+            f"도시가스산업용요금({y_unit})": "{:,.2f}",
             f"LPG요금({y_unit})": "{:,.2f}",
-            "비율(LPG/도시가스)": "{:.3f}",
+            "비율(LPG/도시가스산업용)": "{:.3f}",
         }),
         use_container_width=True,
     )
 
 st.caption(
-    "※ 비율(LPG/도시가스)은 현재 선택된 단위와 상관없이 동일하며, "
-    "1보다 크면 LPG가 도시가스보다 비싼 구간입니다."
+    "※ 비율(LPG/도시가스 산업용)은 현재 선택된 단위와 상관없이 동일하며, "
+    "1보다 크면 LPG가 도시가스 산업용보다 비싼 구간입니다."
 )
