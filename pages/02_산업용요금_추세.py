@@ -175,6 +175,15 @@ fig.update_layout(
     yaxis_title=y_unit,
     hovermode="x",
     margin=dict(l=40, r=20, t=40, b=40),
+    legend=dict(          # ✅ 범례 왼쪽 상단으로 이동
+        x=0,
+        y=1,
+        xanchor="left",
+        yanchor="bottom",
+        bgcolor="rgba(255,255,255,0.8)",
+        bordercolor="lightgray",
+        borderwidth=1,
+    ),
 )
 fig.update_xaxes(tickangle=-45)
 
