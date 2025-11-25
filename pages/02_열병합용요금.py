@@ -249,8 +249,7 @@ with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
     
-    # [추가됨] 기준열량 입력 받기
-    # 1. 먼저 선택된 달의 데이터를 가져와서 기본값(default_cal)을 설정
+    # 기준열량 기본값 설정
     기준일 = pd.to_datetime(selected_ym + "-01")
     당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
 
@@ -261,7 +260,6 @@ with st.sidebar:
 
     st.markdown("---")
     st.markdown("### 🔥 기준열량 변경")
-    # 사용자 입력 (기본값: 당월 데이터 상의 열량)
     input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
     st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
     
@@ -269,7 +267,6 @@ with st.sidebar:
     st.markdown("### 🖨 보고서 인쇄")
     st.markdown("아래 버튼을 누르면 보고서만 깔끔하게 인쇄됩니다.")
     
-    # [인쇄 버튼 자바스크립트]
     components.html(
         """
         <script>
@@ -306,7 +303,91 @@ with st.sidebar:
         height=60
     )
 
-# 데이터 처리 (사이드바 밖에서 예외처리)
+    # -------------------------------------------------------
+    # 📧 열병합용 메일 발송 리스트 (+ 전체 복사 버튼)
+    # -------------------------------------------------------
+    st.markdown("---")
+    st.markdown("### 📧 열병합용 메일 발송 리스트")
+
+    MAIL_URL = (
+        "https://docs.google.com/spreadsheets/d/"
+        "12RGk0NyM24_zxLIJXNAobcinZ714kdDKeeoDSt9Hb9c"
+        "/export?format=csv&gid=1582710939"
+    )
+
+    @st.cache_data(ttl=600)
+    def load_mail_list():
+        try:
+            df_mail = pd.read_csv(MAIL_URL).fillna("")
+            return df_mail
+        except Exception as e:
+            st.error(f"메일 리스트 불러오기 실패: {e}")
+            return pd.DataFrame()
+
+    mail_df = load_mail_list()
+
+    concat_email = ""
+    if not mail_df.empty:
+        # 🔥 구분이 '열병합용'인 것만 필터링
+        열병합용_df = mail_df[mail_df["구분"] == "열병합용"]
+
+        email_list = [
+            email.strip()
+            for email in 열병합용_df["이메일"].tolist()
+            if isinstance(email, str) and email.strip() != ""
+        ]
+
+        if email_list:
+            concat_email = ", ".join(email_list)
+
+            # 화면용 텍스트 영역
+            st.text_area(
+                "📨 복사할 이메일 목록",
+                concat_email,
+                height=200,
+                key="email_textarea_view",
+            )
+
+            st.caption(f"총 {len(email_list)}개의 이메일")
+
+        else:
+            st.info("열병합용 이메일이 없습니다.")
+    else:
+        st.warning("메일 리스트 데이터를 불러올 수 없습니다.")
+
+    # 실제 복사 기능: 숨겨진 textarea + 버튼 (components.html)
+    if concat_email:
+        components.html(
+            f"""
+            <textarea id="email_copy_box" style="position:absolute; left:-9999px; top:-9999px;">{concat_email}</textarea>
+            <button onclick="
+                (function(){{
+                    var ta = document.getElementById('email_copy_box');
+                    ta.select();
+                    document.execCommand('copy');
+                    alert('📋 이메일이 복사되었습니다!');
+                }})();
+            " style="
+                width:100%;
+                margin-top:5px;
+                padding:10px;
+                background-color:#0055b8;
+                color:white;
+                border:none;
+                border-radius:8px;
+                font-size:15px;
+                font-weight:bold;
+                cursor:pointer;
+            ">
+                📋 이메일 전체 복사하기
+            </button>
+            """,
+            height=70,
+        )
+
+# -----------------------------
+# 데이터 없음 처리
+# -----------------------------
 if row_now is None:
     st.error(f"{당월일.date()} 데이터가 없습니다.")
     st.stop()
@@ -320,8 +401,6 @@ today_str = today.strftime("%Y-%m-%d")
 # -----------------------------
 # 데이터 가공
 # -----------------------------
-
-# Table 1 (원/MJ)
 항목정보 = [
     ("열병합", "열병합(MJ)"),
     ("자가열전용", "자가열전용(MJ)"),
@@ -343,25 +422,18 @@ for label, col in 항목정보:
 
 table1 = pd.DataFrame(rows, columns=["용도", "전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"])
 
-# 소수점 2자리 적용 (fmt2)
 table1_disp = table1.copy()
 for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
     table1_disp[col] = table1_disp[col].apply(fmt2)
 
-
-# Table 2 (원/㎥) - [수정됨] 입력된 기준열량(input_cal) 적용
-열량_now = row_now["열량"]
-
 rows_m3 = []
-# 열병합, 자가열전용만 m3 계산
 for label, col in [("열병합", "열병합(MJ)"), ("자가열전용", "자가열전용(MJ)")]:
     now_rate_mj = row_now[col]
     prev_rate_mj = row_prev[col] if row_prev is not None else None
 
-    # [핵심 로직 변경] 전월과 당월 모두 '입력된 기준열량'을 곱해서 환산
     prev_m3 = prev_rate_mj * input_cal if prev_rate_mj is not None else None
     now_m3 = now_rate_mj * input_cal
-    
+
     rows_m3.append([
         label,
         prev_m3,
@@ -382,10 +454,8 @@ for c in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감
 # -----------------------------
 report_html = ""
 
-# Container Open
 report_html += '<div class="report-container">'
 
-# Header
 report_html += f"""<div class="report-header">
 <div class="report-title-main">대성에너지 도시가스 요금 보고서</div>
 <div class="report-title-sub">열병합·자가열전용 요금 단가 변동 현황</div>
@@ -395,24 +465,19 @@ report_html += f"""<div class="report-header">
 </div>
 </div>"""
 
-# Section 1
 report_html += """<div class="section-title">1. 단위: 원/MJ (VAT별도)</div>
 <div class="section-caption">
 열병합 및 자가열전용 요금의 전월 대비 단가 변동을 나타냅니다.
 </div>"""
 report_html += table1_disp.to_html(classes="styled-table", index=False)
 
-# Section 2
 report_html += """<div class="section-title">2. 단위: 원/㎥</div>
 <div class="section-caption">
 기준열량을 적용한 추정치로, 실제 열량 변동에 따라 차이가 발생할 수 있습니다.
 </div>"""
-
-# [수정됨] 설정값 적용 표시
 report_html += f"<div class='section-caption'>기준열량: <strong>{input_cal:,.3f} MJ/㎥</strong> (설정값 적용)</div>"
 report_html += table2_disp.to_html(classes="styled-table", index=False)
 
-# Footer
 report_html += """<div class="footer-note">
 ※ <strong>주의</strong> : 원/㎥ 단위 요금은 설정된 기준열량({cal} MJ/㎥)으로 환산한 값입니다.<br/>
 ※ 도시가스 요금단가 안내:
@@ -426,7 +491,6 @@ https://cyber.daesungenergy.com/charge/solvAvgMJ
 ※ 문의: 대성에너지 마케팅팀 053-606-1317
 </div>""".format(cal=f"{input_cal:,.3f}")
 
-# Container Close
 report_html += "</div>"
 
 st.markdown(report_html, unsafe_allow_html=True)

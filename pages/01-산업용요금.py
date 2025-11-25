@@ -140,17 +140,15 @@ default_index = ym_options.index(current_ym) if current_ym in ym_options else 0
 with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
-    
-    # [추가됨] 기준열량 입력 받기 (이 값으로 전월/당월 모두 곱함)
-    # 초기값은 선택된 달의 열량 데이터 사용
+
     기준일 = pd.to_datetime(selected_ym + "-01")
     당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
-    
+
     if row_now is not None:
         default_cal = row_now["열량"] if pd.notna(row_now["열량"]) else 42.0
     else:
         default_cal = 42.0
-        
+
     st.markdown("---")
     st.markdown("### 🔥 기준열량 변경")
     input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
@@ -170,6 +168,89 @@ with st.sidebar:
         height=60
     )
 
+    # -------------------------------------------------------
+    # 📧 산업용 메일 발송 리스트 (텍스트 + 복사버튼)
+    # -------------------------------------------------------
+    st.markdown("---")
+    st.markdown("### 📧 산업용 메일 발송 리스트")
+
+    MAIL_URL = (
+        "https://docs.google.com/spreadsheets/d/"
+        "12RGk0NyM24_zxLIJXNAobcinZ714kdDKeeoDSt9Hb9c"
+        "/export?format=csv&gid=1582710939"
+    )
+
+    @st.cache_data(ttl=600)
+    def load_mail_list():
+        try:
+            df_mail = pd.read_csv(MAIL_URL).fillna("")
+            return df_mail
+        except Exception as e:
+            st.error(f"메일 리스트 불러오기 실패: {e}")
+            return pd.DataFrame()
+
+    mail_df = load_mail_list()
+
+    concat_email = ""
+    if not mail_df.empty:
+        산업용_df = mail_df[mail_df["구분"] == "산업용"]
+
+        email_list = [
+            email.strip()
+            for email in 산업용_df["이메일"].tolist()
+            if isinstance(email, str) and email.strip() != ""
+        ]
+
+        if email_list:
+            concat_email = ", ".join(email_list)
+
+            # Streamlit 쪽 텍스트 영역 (보여주기용)
+            st.text_area(
+                "📨 복사할 이메일 목록",
+                concat_email,
+                height=200,
+                key="email_textarea_view",
+            )
+
+            st.caption(f"총 {len(email_list)}개의 이메일")
+        else:
+            st.info("산업용 이메일이 없습니다.")
+    else:
+        st.warning("메일 리스트 데이터를 불러올 수 없습니다.")
+
+    # 실제 복사 기능은 components.html 안에서 처리 (별도 iframe)
+    if concat_email:
+        components.html(
+            f"""
+            <textarea id="email_copy_box" style="position:absolute; left:-9999px; top:-9999px;">{concat_email}</textarea>
+            <button onclick="
+                (function(){{
+                    var ta = document.getElementById('email_copy_box');
+                    ta.select();
+                    document.execCommand('copy');
+                    alert('📋 이메일이 복사되었습니다!');
+                }})();
+            " style="
+                width:100%;
+                margin-top:5px;
+                padding:10px;
+                background-color:#0055b8;
+                color:white;
+                border:none;
+                border-radius:8px;
+                font-size:15px;
+                font-weight:bold;
+                cursor:pointer;
+            ">
+                📋 이메일 전체 복사하기
+            </button>
+            """,
+            height=70,
+        )
+
+# -----------------------------
+# 데이터 없음 처리
+# -----------------------------
 if row_now is None:
     st.error(f"{당월일.date()} 데이터가 없습니다.")
     st.stop()
@@ -200,7 +281,6 @@ table1_disp = table1.copy()
 for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
     table1_disp[col] = table1_disp[col].apply(fmt2)
 
-# [수정됨] 루베(m3) 환산 로직: 사용자가 입력한 input_cal 값을 양쪽에 동일하게 곱함
 가격_m3_prev = 산업용_prev * input_cal if 산업용_prev is not None else None
 가격_m3_now = 산업용_now * input_cal
 증감_m3 = safe_diff(가격_m3_now, 가격_m3_prev)
@@ -242,7 +322,6 @@ report_html += """<div class="section-title">2. 단위: 원/㎥</div>
 <div class="section-caption">
 매월 열량 변경으로 인한 오차가 존재할 수 있어, 참고용으로만 활용하시기 바랍니다.
 </div>"""
-# [수정됨] 입력된 기준열량 표시
 report_html += f"<div class='section-caption'>기준열량: <strong>{input_cal:,.3f} MJ/㎥</strong> (설정값 적용)</div>"
 report_html += table2_disp.to_html(classes="styled-table", index=False)
 
