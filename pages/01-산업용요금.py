@@ -44,8 +44,10 @@ body { background-color: #eeeeee; }
     font-family: "KoPubDotum", "맑은 고딕", sans-serif;
     color: #222;
     box-sizing: border-box;
+    /* flex는 굳이 안 씀
     display: flex;
     flex-direction: column;
+    */
 }
 
 /* 3. 헤더 및 텍스트 스타일 */
@@ -70,7 +72,14 @@ body { background-color: #eeeeee; }
 .styled-table th:nth-child(5), .styled-table td:nth-child(5) { width: 16%; }
 
 /* 5. 푸터 주석 */
-.footer-note { margin-top: auto; padding-top: 20px; border-top: 1px solid #eee; font-size: 9pt; color: #888; line-height: 1.5; }
+.footer-note {
+    margin-top: 8px;          /* ⬅ 여기! auto 대신 살짝만 띄우기 */
+    padding-top: 8px;
+    border-top: 1px solid #eee;
+    font-size: 9pt;
+    color: #888;
+    line-height: 1.5;
+}
 .footer-note strong { color: #e74c3c; }
 .footer-note a { color: #2980b9; text-decoration: none; }
 

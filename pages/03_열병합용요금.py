@@ -50,8 +50,10 @@ body {
     font-family: "KoPubDotum", "맑은 고딕", sans-serif;
     color: #222;
     box-sizing: border-box;
+    /* flex는 여기서 굳이 필요 없음
     display: flex;
     flex-direction: column;
+    */
 }
 
 /* 3. 헤더 및 텍스트 스타일 */
@@ -134,11 +136,11 @@ body {
 .styled-table th:nth-child(4), .styled-table td:nth-child(4) { width: 20%; }
 .styled-table th:nth-child(5), .styled-table td:nth-child(5) { width: 16%; }
 
-
 /* 5. 푸터 주석 */
 .footer-note {
-    margin-top: auto;
-    padding-top: 20px;
+    /* 원래 margin-top: auto; 였던 부분 */
+    margin-top: 8px;
+    padding-top: 8px;
     border-top: 1px solid #eee;
     font-size: 9pt;
     color: #888;
@@ -488,7 +490,7 @@ https://cyber.daesungenergy.com/charge/pricetable
 <a href="https://cyber.daesungenergy.com/charge/solvAvgMJ" target="_blank">
 https://cyber.daesungenergy.com/charge/solvAvgMJ
 </a><br/>
-※ 문의: 대성에너지 마케팅팀 053-606-1317
+※ 문의: 대성에너지 마케팅팀
 </div>""".format(cal=f"{input_cal:,.3f}")
 
 report_html += "</div>"
