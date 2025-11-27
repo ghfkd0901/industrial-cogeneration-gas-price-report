@@ -50,10 +50,6 @@ body {
     font-family: "KoPubDotum", "맑은 고딕", sans-serif;
     color: #222;
     box-sizing: border-box;
-    /* flex는 여기서 굳이 필요 없음
-    display: flex;
-    flex-direction: column;
-    */
 }
 
 /* 3. 헤더 및 텍스트 스타일 */
@@ -138,7 +134,6 @@ body {
 
 /* 5. 푸터 주석 */
 .footer-note {
-    /* 원래 margin-top: auto; 였던 부분 */
     margin-top: 8px;
     padding-top: 8px;
     border-top: 1px solid #eee;
@@ -221,15 +216,14 @@ def get_month_rows(df: pd.DataFrame, 기준일):
     return 당월일, 전월일, row_now, row_prev
 
 def safe_diff(now, prev):
-    if pd.isna(now) or pd.isna(prev): return None
+    if pd.isna(now) or pd.isna(prev): 
+        return None
     return now - prev
 
 def safe_pct(now, prev):
-    if pd.isna(now) or pd.isna(prev) or prev == 0: return None
+    if pd.isna(now) or pd.isna(prev) or prev == 0: 
+        return None
     return (now / prev - 1) * 100
-
-def fmt2(x): return "" if pd.isna(x) else f"{x:,.2f}"
-def fmt2_money(x): return "" if pd.isna(x) else f"{x:,.2f}"
 
 
 # -----------------------------
@@ -246,7 +240,6 @@ today = date.today()
 current_ym = today.strftime("%Y-%m")
 default_index = ym_options.index(current_ym) if current_ym in ym_options else 0
 
-# [사이드바 구성]
 with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
@@ -264,6 +257,18 @@ with st.sidebar:
     st.markdown("### 🔥 기준열량 변경")
     input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
     st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
+
+    # 🔢 표 소수점 자릿수 옵션 추가
+    st.markdown("---")
+    st.markdown("### 🔢 표 소수점 자릿수")
+    decimal_places = st.slider(
+        "표시할 소수점 자릿수",
+        min_value=0,
+        max_value=6,
+        value=4,
+        step=1,
+        help="표에 표시되는 숫자의 소수점 자릿수를 조정합니다."
+    )
     
     st.markdown("---")
     st.markdown("### 🖨 보고서 인쇄")
@@ -387,6 +392,12 @@ with st.sidebar:
             height=70,
         )
 
+# 🔢 선택된 소수 자릿수로 포맷팅 함수 정의
+def fmt_number(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:,.{decimal_places}f}"
+
 # -----------------------------
 # 데이터 없음 처리
 # -----------------------------
@@ -426,7 +437,7 @@ table1 = pd.DataFrame(rows, columns=["용도", "전월(원/MJ)", "당월(원/MJ)
 
 table1_disp = table1.copy()
 for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
-    table1_disp[col] = table1_disp[col].apply(fmt2)
+    table1_disp[col] = table1_disp[col].apply(fmt_number)
 
 rows_m3 = []
 for label, col in [("열병합", "열병합(MJ)"), ("자가열전용", "자가열전용(MJ)")]:
@@ -448,7 +459,7 @@ table2 = pd.DataFrame(rows_m3, columns=["구분", "변경전(원/㎥)", "변경�
 
 table2_disp = table2.copy()
 for c in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
-    table2_disp[c] = table2_disp[c].apply(fmt2_money)
+    table2_disp[c] = table2_disp[c].apply(fmt_number)
 
 
 # -----------------------------
