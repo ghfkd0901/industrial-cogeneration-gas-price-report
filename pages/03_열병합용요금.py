@@ -162,7 +162,6 @@ body {
         overflow: hidden;
     }
     
-    /* 사이드바(stSidebar), 헤더, 푸터, 배포버튼 숨김 */
     section[data-testid="stSidebar"], header, footer, .stDeployButton {
         display: none !important;
     }
@@ -172,7 +171,6 @@ body {
         margin: 0 !important;
     }
     
-    /* 보고서 컨테이너만 출력 */
     .report-container {
         width: 210mm;
         height: 296mm;
@@ -225,6 +223,17 @@ def safe_pct(now, prev):
         return None
     return (now / prev - 1) * 100
 
+# 포맷 함수: 2자리 / 4자리
+def fmt2(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:,.2f}"
+
+def fmt4(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:,.4f}"
+
 
 # -----------------------------
 # 사이드바 설정 & 인쇄 버튼
@@ -244,7 +253,6 @@ with st.sidebar:
     st.markdown("### 🛠 설정")
     selected_ym = st.selectbox("기준 연-월 선택", ym_options, index=default_index)
     
-    # 기준열량 기본값 설정
     기준일 = pd.to_datetime(selected_ym + "-01")
     당월일, 전월일, row_now, row_prev = get_month_rows(df, 기준일)
 
@@ -257,18 +265,6 @@ with st.sidebar:
     st.markdown("### 🔥 기준열량 변경")
     input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
     st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
-
-    # 🔢 표 소수점 자릿수 옵션 추가
-    st.markdown("---")
-    st.markdown("### 🔢 표 소수점 자릿수")
-    decimal_places = st.slider(
-        "표시할 소수점 자릿수",
-        min_value=0,
-        max_value=6,
-        value=4,
-        step=1,
-        help="표에 표시되는 숫자의 소수점 자릿수를 조정합니다."
-    )
     
     st.markdown("---")
     st.markdown("### 🖨 보고서 인쇄")
@@ -392,12 +388,6 @@ with st.sidebar:
             height=70,
         )
 
-# 🔢 선택된 소수 자릿수로 포맷팅 함수 정의
-def fmt_number(x):
-    if pd.isna(x):
-        return ""
-    return f"{x:,.{decimal_places}f}"
-
 # -----------------------------
 # 데이터 없음 처리
 # -----------------------------
@@ -435,9 +425,17 @@ for label, col in 항목정보:
 
 table1 = pd.DataFrame(rows, columns=["용도", "전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"])
 
+# 🔧 1번표 표시용:
+# - 열병합/자가열전용 행의 전월/당월/증감(원/MJ) → 4자리
+# - 나머지 숫자 칸 → 2자리
 table1_disp = table1.copy()
-for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
-    table1_disp[col] = table1_disp[col].apply(fmt_number)
+for idx, row in table1.iterrows():
+    for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
+        val = row[col]
+        if row["용도"] in ["열병합", "자가열전용"] and col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)"]:
+            table1_disp.at[idx, col] = fmt4(val)  # 네 자리
+        else:
+            table1_disp.at[idx, col] = fmt2(val)  # 두 자리
 
 rows_m3 = []
 for label, col in [("열병합", "열병합(MJ)"), ("자가열전용", "자가열전용(MJ)")]:
@@ -457,10 +455,17 @@ for label, col in [("열병합", "열병합(MJ)"), ("자가열전용", "자가�
 
 table2 = pd.DataFrame(rows_m3, columns=["구분", "변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"])
 
+# 🔧 2번표 표시용:
+# - 증감(%)만 2자리
+# - 나머지(변경전/변경후/증감(원/㎥)) 4자리
 table2_disp = table2.copy()
-for c in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
-    table2_disp[c] = table2_disp[c].apply(fmt_number)
-
+for idx, row in table2.iterrows():
+    for col in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
+        val = row[col]
+        if col == "증감(%)":
+            table2_disp.at[idx, col] = fmt2(val)
+        else:
+            table2_disp.at[idx, col] = fmt4(val)
 
 # -----------------------------
 # HTML 조립

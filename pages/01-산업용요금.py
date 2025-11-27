@@ -61,7 +61,14 @@ body { background-color: #eeeeee; }
 .styled-table th, .styled-table td { border: 1px solid #e0e0e0; padding: 10px 5px; text-align: right; vertical-align: middle; }
 .styled-table th { font-weight: 600; color: #333; text-align: center; background-color: #f4f4f8; }
 
-.styled-table th:nth-child(1), .styled-table td:nth-child(1) { width: 28%; text-align: left; padding-left: 15px; background-color: #fafafa; font-weight: 600; white-space: nowrap; }
+.styled-table th:nth-child(1), .styled-table td:nth-child(1) {
+    width: 28%;
+    text-align: left;
+    padding-left: 15px;
+    background-color: #fafafa;
+    font-weight: 600;
+    white-space: nowrap;
+}
 .styled-table th:nth-child(2), .styled-table td:nth-child(2) { width: 18%; }
 .styled-table th:nth-child(3), .styled-table td:nth-child(3) { width: 18%; }
 .styled-table th:nth-child(4), .styled-table td:nth-child(4) { width: 20%; }
@@ -119,14 +126,25 @@ def get_month_rows(df: pd.DataFrame, 기준일):
     return 당월일, 전월일, row_now, row_prev
 
 def safe_diff(now, prev):
-    if pd.isna(now) or pd.isna(prev): 
+    if pd.isna(now) or pd.isna(prev):
         return None
     return now - prev
 
 def safe_pct(now, prev):
-    if pd.isna(now) or pd.isna(prev) or prev == 0: 
+    if pd.isna(now) or pd.isna(prev) or prev == 0:
         return None
     return (now / prev - 1) * 100
+
+# 숫자 포맷 함수: 2자리 / 4자리
+def fmt2(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:,.2f}"
+
+def fmt4(x):
+    if pd.isna(x):
+        return ""
+    return f"{x:,.4f}"
 
 # -----------------------------
 # 사이드바 설정 & 인쇄 버튼
@@ -158,18 +176,6 @@ with st.sidebar:
     input_cal = st.number_input("MJ/㎥", value=float(default_cal), format="%.4f")
     st.caption("입력하신 기준열량을 전월/당월 요금에 동일하게 곱하여 산출합니다.")
 
-    # 🔢 표 소수점 자릿수 옵션 추가
-    st.markdown("---")
-    st.markdown("### 🔢 표 소수점 자릿수")
-    decimal_places = st.slider(
-        "표시할 소수점 자릿수",
-        min_value=0,
-        max_value=6,
-        value=4,
-        step=1,
-        help="표에 표시되는 숫자의 소수점 자릿수를 조정합니다."
-    )
-
     st.markdown("---")
     st.markdown("### 🖨 보고서 인쇄")
     components.html(
@@ -185,7 +191,7 @@ with st.sidebar:
     )
 
     # -------------------------------------------------------
-    # 📧 산업용 메일 발송 리스트 (텍스트 + 복사버튼)
+    # 📧 산업용 메일 발송 리스트
     # -------------------------------------------------------
     st.markdown("---")
     st.markdown("### 📧 산업용 메일 발송 리스트")
@@ -220,7 +226,6 @@ with st.sidebar:
         if email_list:
             concat_email = ", ".join(email_list)
 
-            # Streamlit 쪽 텍스트 영역 (보여주기용)
             st.text_area(
                 "📨 복사할 이메일 목록",
                 concat_email,
@@ -234,7 +239,6 @@ with st.sidebar:
     else:
         st.warning("메일 리스트 데이터를 불러올 수 없습니다.")
 
-    # 실제 복사 기능은 components.html 안에서 처리 (별도 iframe)
     if concat_email:
         components.html(
             f"""
@@ -264,12 +268,6 @@ with st.sidebar:
             height=70,
         )
 
-# 🔢 선택된 소수 자릿수로 포맷팅 함수 정의
-def fmt_number(x):
-    if pd.isna(x):
-        return ""
-    return f"{x:,.{decimal_places}f}"
-
 # -----------------------------
 # 데이터 없음 처리
 # -----------------------------
@@ -278,6 +276,7 @@ if row_now is None:
     st.stop()
 if row_prev is None:
     st.warning(f"전월({전월일.date()}) 데이터가 없어 증감 계산 일부 공백일 수 있습니다.")
+
 today_str = today.strftime("%Y-%m-%d")
 
 # -----------------------------
@@ -299,10 +298,19 @@ table1 = pd.DataFrame(rows, columns=["용도", "전월(원/MJ)", "당월(원/MJ)
 table1["증감(원/MJ)"] = [safe_diff(n, p) for p, n in zip(table1["전월(원/MJ)"], table1["당월(원/MJ)"])]
 table1["증감(%)"] = [safe_pct(n, p) for p, n in zip(table1["전월(원/MJ)"], table1["당월(원/MJ)"])]
 
+# 1번표 표시용:
+# - 산업용 행의 전월/당월/증감(원/MJ) → 4자리
+# - 나머지 숫자 칸 → 2자리
 table1_disp = table1.copy()
-for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
-    table1_disp[col] = table1_disp[col].apply(fmt_number)
+for idx, row in table1.iterrows():
+    for col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)", "증감(%)"]:
+        val = row[col]
+        if row["용도"] == "산업용" and col in ["전월(원/MJ)", "당월(원/MJ)", "증감(원/MJ)"]:
+            table1_disp.at[idx, col] = fmt4(val)
+        else:
+            table1_disp.at[idx, col] = fmt2(val)
 
+# 2번표: 원/㎥ 환산
 가격_m3_prev = 산업용_prev * input_cal if 산업용_prev is not None else None
 가격_m3_now = 산업용_now * input_cal
 증감_m3 = safe_diff(가격_m3_now, 가격_m3_prev)
@@ -315,9 +323,16 @@ table2 = pd.DataFrame({
     "증감(원/㎥)": [증감_m3],
     "증감(%)": [증감_pct_m3],
 })
+
+# 2번표 표시용: 증감(%)만 2자리, 나머지는 4자리
 table2_disp = table2.copy()
-for c in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
-    table2_disp[c] = table2_disp[c].apply(fmt_number)
+for idx, row in table2.iterrows():
+    for col in ["변경전(원/㎥)", "변경후(원/㎥)", "증감(원/㎥)", "증감(%)"]:
+        val = row[col]
+        if col == "증감(%)":
+            table2_disp.at[idx, col] = fmt2(val)
+        else:
+            table2_disp.at[idx, col] = fmt4(val)
 
 # -----------------------------
 # HTML 조립
