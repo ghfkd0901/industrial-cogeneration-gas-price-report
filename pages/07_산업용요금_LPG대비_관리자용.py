@@ -13,7 +13,6 @@ st.set_page_config(
 )
 
 # ✅ 비밀번호 설정
-# .streamlit/secrets.toml 에 REPORT_PASSWORD="원하는비번" 추가해두는 걸 추천
 PASSWORD = st.secrets.get("REPORT_PASSWORD", "1234")  # 없으면 임시로 1234
 
 # ✅ 인증 상태
@@ -101,16 +100,16 @@ footer { display:none !important; }
 }
 .report-date-right {
     text-align: right;
-    font-size: 10.5pt;
+    font-size: 10pt;      /* 본문과 동일 */
     color: #444;
     margin-bottom: 16px;
 }
 
-/* 섹션 타이틀 */
+/* 섹션 타이틀 – 소제목은 12pt로 살짝 크게 */
 .section-title-row {
     margin-top: 18px;
     margin-bottom: 4px;
-    font-size: 12pt;
+    font-size: 12pt;       /* 🔹 소제목 크기 */
     font-weight: 700;
     display: flex;
     justify-content: space-between;
@@ -122,30 +121,35 @@ footer { display:none !important; }
     gap: 6px;
 }
 .section-title-row .bullet {
-    color: #e74c3c;
+    color: #000000;       /* 네모 글머리 */
     font-size: 14pt;
 }
 .section-title-row .label {
-    font-size: 12pt;
+    font-size: 12pt;      /* 소제목 크기 */
 }
 .section-title-row .vat-note {
-    font-size: 9pt;
+    font-size: 10pt;      /* 본문과 동일 */
     color: #777;
 }
 
-/* 섹션 캡션(요약 문장 한 줄) */
-.section-caption {
-    font-size: 10pt;
+/* 섹션 캡션 – 동그라미 글머리 목록으로 표시 */
+.section-caption-list {
+    margin: 0 0 8px 20px;
+    padding-left: 0;
+    list-style-type: disc;     /* ● 글머리 */
+    font-size: 10pt;           /* 본문과 동일 */
     color: #555;
-    margin-bottom: 8px;
+}
+.section-caption-list li {
+    margin: 0;
 }
 
-/* 테이블 */
+/* 테이블 – 본문 폰트 크기 통일 */
 .comp-table {
     border-collapse: collapse;
     width: 100%;
     margin-bottom: 22px;
-    font-size: 10.5pt;
+    font-size: 10pt;       /* 본문 폰트 크기 */
     table-layout: fixed;
 }
 .comp-table thead tr {
@@ -153,13 +157,20 @@ footer { display:none !important; }
     border-top: 2px solid #222;
     border-bottom: 1px solid #555;
 }
-.comp-table th, .comp-table td {
+.comp-table th {
+    border: 1px solid #e0e0e0;
+    padding: 9px 6px;
+    text-align: center;    /* 헤더 가운데 정렬 */
+    vertical-align: middle;
+    font-weight: 600;
+    color: #333;
+}
+.comp-table td {
     border: 1px solid #e0e0e0;
     padding: 9px 6px;
     text-align: right;
     vertical-align: middle;
 }
-.comp-table th:nth-child(1),
 .comp-table td:nth-child(1) {
     text-align: center;
     width: 24%;
@@ -174,11 +185,6 @@ footer { display:none !important; }
 .comp-table th:nth-child(5),
 .comp-table td:nth-child(5) { width: 19%; }
 
-.comp-table th {
-    font-weight: 600;
-    color: #333;
-}
-
 /* 강조 */
 .value-now {
     font-weight: 700;
@@ -187,22 +193,27 @@ footer { display:none !important; }
 .change-down { color: #2980b9; font-weight: 600; }
 .change-flat { color: #555; font-weight: 600; }
 
-/* 특이사항 */
+/* 특이사항 소제목 – 12pt */
 .notice-title-row {
     margin-top: 10px;
     margin-bottom: 6px;
-    font-size: 12pt;
+    font-size: 12pt;      /* 🔹 소제목 크기 */
     font-weight: 700;
     display: flex;
     align-items: center;
     gap: 6px;
 }
+.notice-title-row .bullet {
+    color: #000000;   /* 네모 글머리 */
+    font-size: 14pt;
+}
 .notice-list {
     margin-top: 4px;
-    padding-left: 16px;
-    font-size: 10pt;
+    padding-left: 20px;
+    font-size: 10pt;  /* 본문과 동일 */
     color: #444;
     line-height: 1.6;
+    list-style-type: disc;  /* 동그라미 글머리 */
 }
 
 /* 인쇄 */
@@ -243,7 +254,6 @@ def load_data() -> pd.DataFrame:
     df = pd.read_csv(CSV_URL)
     df["Date"] = pd.to_datetime(df["Date"])
 
-    # 숫자 컬럼
     num_cols = [
         "산업용_원/MJ",
         "적용유가",
@@ -257,7 +267,6 @@ def load_data() -> pd.DataFrame:
     for c in num_cols:
         if c in df.columns:
             df[c] = pd.to_numeric(df[c], errors="coerce")
-
     return df
 
 
@@ -292,7 +301,6 @@ def fmt_num(x, digits=2):
     return f"{x:,.{digits}f}"
 
 
-# 화살표 없이 +,-만 색상으로 표시
 def fmt_change_pct(x):
     if x is None or pd.isna(x):
         return "", "change-flat"
@@ -362,7 +370,9 @@ if row_now is None:
     st.error(f"{selected_ym} 데이터가 없습니다.")
     st.stop()
 if row_prev is None:
-    st.warning(f"전월({(기준일 - DateOffset(months=1)).strftime('%Y-%m')}) 데이터가 없어 일부 증감 값은 공백일 수 있습니다.")
+    st.warning(
+        f"전월({(기준일 - DateOffset(months=1)).strftime('%Y-%m')}) 데이터가 없어 일부 증감 값은 공백일 수 있습니다."
+    )
 
 # -----------------------------
 # 값 추출
@@ -377,7 +387,6 @@ col_vs_lpg = "산업용 vs LPG\n(%)"
 LPG_prev = row_prev[col_lpg_mj] if (row_prev is not None and col_lpg_mj in row_prev) else None
 LPG_now = row_now[col_lpg_mj] if col_lpg_mj in row_now else None
 
-# 전월 대비 증감값 / 증감%
 산업용_diff_val = safe_diff(산업용_now, 산업용_prev)
 산업용_pct_val = safe_pct(산업용_now, 산업용_prev)
 
@@ -411,7 +420,6 @@ if special_col is not None and pd.notna(row_now[special_col]):
 else:
     special_text_raw = ""
 
-# 여러 줄이면 줄바꿈 기준으로 나눠서 bullet 처리
 special_items = [line.strip() for line in special_text_raw.split("\n") if line.strip()]
 
 # -----------------------------
@@ -432,7 +440,6 @@ LPG_pct_str, LPG_pct_cls = fmt_change_pct(LPG_pct_val)
 환율_diff_str, 환율_diff_cls = fmt_change_abs(환율_diff_val)
 환율_pct_str, 환율_pct_cls = fmt_change_pct(환율_pct_val)
 
-# 섹션 캡션용 상대 수준 문구
 if vs_lpg_pct is not None and not pd.isna(vs_lpg_pct):
     vs_caption = (
         f"LPG(SK 가정상업용) 단가는 도시가스(산업용)을 100으로 볼 때 "
@@ -462,7 +469,11 @@ report_html = f"""
     </div>
     <div class="vat-note">(VAT 별도)</div>
   </div>
-  <div class="section-caption">- {vs_caption}</div>
+
+  <!-- 캡션: 동그라미 글머리 리스트 -->
+  <ul class="section-caption-list">
+    <li>{vs_caption}</li>
+  </ul>
 
   <!-- 표 -->
   <table class="comp-table">
@@ -491,14 +502,14 @@ report_html = f"""
         <td><span class="{LPG_pct_cls}">{LPG_pct_str}</span></td>
       </tr>
       <tr>
-        <td>기준유가($/배럴)</td>
+        <td>기준유가<br/>($/배럴)</td>
         <td>{fmt_num(유가_prev, 2)}</td>
         <td class="value-now">{fmt_num(유가_now, 2)}</td>
         <td><span class="{유가_diff_cls}">{유가_diff_str}</span></td>
         <td><span class="{유가_pct_cls}">{유가_pct_str}</span></td>
       </tr>
       <tr>
-        <td>기준환율(원/$)</td>
+        <td>기준환율<br/>(원/$)</td>
         <td>{fmt_num(환율_prev, 2)}</td>
         <td class="value-now">{fmt_num(환율_now, 2)}</td>
         <td><span class="{환율_diff_cls}">{환율_diff_str}</span></td>
