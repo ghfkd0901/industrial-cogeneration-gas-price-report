@@ -23,7 +23,6 @@ if "report_authenticated" not in st.session_state:
 def check_password():
     """비밀번호 입력/검증 UI"""
     st.title("🔒 에너지 요금 현황 보고 (보안 페이지)")
-
     with st.form("password_form"):
         pw = st.text_input("비밀번호를 입력하세요.", type="password")
         submitted = st.form_submit_button("입장하기")
@@ -49,7 +48,6 @@ if not st.session_state["report_authenticated"]:
 # =============================
 # 여기서부터는 인증된 사람만 볼 수 있는 본문
 # =============================
-
 CSV_URL = (
     "https://docs.google.com/spreadsheets/d/"
     "12RGk0NyM24_zxLIJXNAobcinZ714kdDKeeoDSt9Hb9c"
@@ -66,9 +64,12 @@ CUSTOM_CSS = """
     padding-bottom: 1rem !important;
     max-width: 100% !important;
 }
-body { background-color: #eeeeee; }
-footer { display:none !important; }
-
+body {
+    background-color: #eeeeee;
+}
+footer {
+    display:none !important;
+}
 .report-container {
     width: 210mm;
     min-height: 297mm;
@@ -100,7 +101,7 @@ footer { display:none !important; }
 }
 .report-date-right {
     text-align: right;
-    font-size: 10pt;      /* 본문과 동일 */
+    font-size: 10pt;  /* 본문과 동일 */
     color: #444;
     margin-bottom: 16px;
 }
@@ -109,7 +110,7 @@ footer { display:none !important; }
 .section-title-row {
     margin-top: 18px;
     margin-bottom: 4px;
-    font-size: 12pt;       /* 🔹 소제목 크기 */
+    font-size: 12pt;      /* 🔹 소제목 크기 */
     font-weight: 700;
     display: flex;
     justify-content: space-between;
@@ -132,24 +133,24 @@ footer { display:none !important; }
     color: #777;
 }
 
-/* 섹션 캡션 – 동그라미 글머리 목록으로 표시 */
+/* 섹션 캡션 – 동그라미 글머리 목록, 특이사항과 라인/폰트 맞춤 */
 .section-caption-list {
-    margin: 0 0 8px 20px;
-    padding-left: 0;
-    list-style-type: disc;     /* ● 글머리 */
-    font-size: 10pt;           /* 본문과 동일 */
+    margin: 0 0 8px 0;    /* 왼쪽 여백 0으로 */
+    padding-left: 32px;   /* 글머리 들여쓰기 */
+    list-style-type: disc;/* ● 글머리 */
+    font-size: 10pt;      /* 본문과 동일 */
     color: #555;
 }
 .section-caption-list li {
     margin: 0;
 }
 
-/* 테이블 – 본문 폰트 크기 통일 */
+/* 테이블 – 본문 폰트 크기 통일, 숫자 조금 키움 */
 .comp-table {
     border-collapse: collapse;
     width: 100%;
     margin-bottom: 22px;
-    font-size: 10pt;       /* 본문 폰트 크기 */
+    font-size: 11pt;              /* 🔹 10pt → 11pt 로 키움 */
     table-layout: fixed;
 }
 .comp-table thead tr {
@@ -160,7 +161,7 @@ footer { display:none !important; }
 .comp-table th {
     border: 1px solid #e0e0e0;
     padding: 9px 6px;
-    text-align: center;    /* 헤더 가운데 정렬 */
+    text-align: center;           /* 헤더 가운데 정렬 */
     vertical-align: middle;
     font-weight: 600;
     color: #333;
@@ -170,28 +171,34 @@ footer { display:none !important; }
     padding: 9px 6px;
     text-align: right;
     vertical-align: middle;
+    font-size: 11pt;
 }
 .comp-table td:nth-child(1) {
     text-align: center;
     width: 24%;
     font-weight: 600;
 }
-.comp-table th:nth-child(2),
-.comp-table td:nth-child(2) { width: 19%; }
-.comp-table th:nth-child(3),
-.comp-table td:nth-child(3) { width: 19%; }
-.comp-table th:nth-child(4),
-.comp-table td:nth-child(4) { width: 19%; }
-.comp-table th:nth-child(5),
-.comp-table td:nth-child(5) { width: 19%; }
+.comp-table th:nth-child(2), .comp-table td:nth-child(2) { width: 19%; }
+.comp-table th:nth-child(3), .comp-table td:nth-child(3) { width: 19%; }
+.comp-table th:nth-child(4), .comp-table td:nth-child(4) { width: 19%; }
+.comp-table th:nth-child(5), .comp-table td:nth-child(5) { width: 19%; }
 
 /* 강조 */
 .value-now {
     font-weight: 700;
 }
-.change-up   { color: #e74c3c; font-weight: 600; }
-.change-down { color: #2980b9; font-weight: 600; }
-.change-flat { color: #555; font-weight: 600; }
+.change-up {
+    color: #e74c3c;
+    font-weight: 600;
+}
+.change-down {
+    color: #2980b9;
+    font-weight: 600;
+}
+.change-flat {
+    color: #555;
+    font-weight: 600;
+}
 
 /* 특이사항 소제목 – 12pt */
 .notice-title-row {
@@ -204,21 +211,26 @@ footer { display:none !important; }
     gap: 6px;
 }
 .notice-title-row .bullet {
-    color: #000000;   /* 네모 글머리 */
+    color: #000000;       /* 네모 글머리 */
     font-size: 14pt;
 }
+
+/* 특이사항 리스트 – 위 캡션과 폰트/라인 통일 */
 .notice-list {
-    margin-top: 4px;
-    padding-left: 20px;
-    font-size: 10pt;  /* 본문과 동일 */
+    margin: 4px 0 0 0;    /* 왼쪽 여백 0으로 */
+    padding-left: 18px;   /* 글머리 들여쓰기 */
+    font-size: 10pt;      /* 본문과 동일 */
     color: #444;
     line-height: 1.6;
-    list-style-type: disc;  /* 동그라미 글머리 */
+    list-style-type: disc;/* 동그라미 글머리 */
 }
 
 /* 인쇄 */
 @media print {
-    @page { size: A4 portrait; margin: 0; }
+    @page {
+        size: A4 portrait;
+        margin: 0;
+    }
     html, body {
         height: 100%;
         margin: 0 !important;
@@ -244,6 +256,7 @@ footer { display:none !important; }
 }
 </style>
 """
+
 st.markdown(CUSTOM_CSS, unsafe_allow_html=True)
 
 # -----------------------------
@@ -280,6 +293,7 @@ def get_month_rows(df: pd.DataFrame, 기준일):
 
     row_now = None if row_now.empty else row_now.iloc[0]
     row_prev = None if row_prev.empty else row_prev.iloc[0]
+
     return 당월일, 전월일, row_now, row_prev
 
 
@@ -324,7 +338,6 @@ def fmt_change_abs(x):
 # -----------------------------
 df = load_data()
 df["연월"] = df["Date"].dt.to_period("M").astype(str)
-
 valid_df = df[df["산업용_원/MJ"].notna()]
 ym_options = sorted(valid_df["연월"].unique(), reverse=True)
 
@@ -344,7 +357,9 @@ with st.sidebar:
     components.html(
         """
         <script>
-        function printPage(){ window.parent.print(); }
+        function printPage(){
+            window.parent.print();
+        }
         </script>
         <button onclick="printPage()" style="
             width:100%;
@@ -357,7 +372,7 @@ with st.sidebar:
             font-size:15px;
             cursor:pointer;
         ">
-            🖨 보고서 인쇄
+        🖨 보고서 인쇄
         </button>
         """,
         height=60,
@@ -369,6 +384,7 @@ with st.sidebar:
 if row_now is None:
     st.error(f"{selected_ym} 데이터가 없습니다.")
     st.stop()
+
 if row_prev is None:
     st.warning(
         f"전월({(기준일 - DateOffset(months=1)).strftime('%Y-%m')}) 데이터가 없어 일부 증감 값은 공백일 수 있습니다."
@@ -442,7 +458,7 @@ LPG_pct_str, LPG_pct_cls = fmt_change_pct(LPG_pct_val)
 
 if vs_lpg_pct is not None and not pd.isna(vs_lpg_pct):
     vs_caption = (
-        f"LPG(SK 가정상업용) 단가는 도시가스(산업용)을 100으로 볼 때 "
+        f"LPG(SK가정상업용) 단가는 도시가스(산업용)을 100으로 볼 때 "
         f"약 {vs_lpg_pct:.2f}% 수준입니다."
     )
 else:
@@ -456,8 +472,8 @@ report_html = f"""
 
   <!-- 헤더 -->
   <div class="report-header">
-      <div class="report-title-main">에너지 요금 현황 보고</div>
-      <div class="report-title-sub">({month_kor}월)</div>
+    <div class="report-title-main">에너지 요금 현황 보고</div>
+    <div class="report-title-sub">({month_kor}월)</div>
   </div>
   <div class="report-date-right">{report_date_str}</div>
 
@@ -533,7 +549,6 @@ else:
 
 report_html += """
   </ul>
-
 </div>
 """
 
