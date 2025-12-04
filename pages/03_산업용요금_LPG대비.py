@@ -12,41 +12,8 @@ st.set_page_config(
     layout="centered",
 )
 
-# ✅ 비밀번호 설정
-PASSWORD = st.secrets.get("REPORT_PASSWORD", "1234")  # 없으면 임시로 1234
-
-# ✅ 인증 상태
-if "report_authenticated" not in st.session_state:
-    st.session_state["report_authenticated"] = False
-
-
-def check_password():
-    """비밀번호 입력/검증 UI"""
-    st.title("🔒 에너지 요금 현황 보고 (보안 페이지)")
-    with st.form("password_form"):
-        pw = st.text_input("비밀번호를 입력하세요.", type="password")
-        submitted = st.form_submit_button("입장하기")
-
-    if submitted:
-        if pw == PASSWORD:
-            st.session_state["report_authenticated"] = True
-            st.success("인증되었습니다.")
-        else:
-            st.error("비밀번호가 올바르지 않습니다.")
-
-    return st.session_state["report_authenticated"]
-
-
-# -----------------------------
-# 비밀번호 체크
-# -----------------------------
-if not st.session_state["report_authenticated"]:
-    authenticated = check_password()
-    if not authenticated:
-        st.stop()
-
 # =============================
-# 여기서부터는 인증된 사람만 볼 수 있는 본문
+# 여기서부터는 바로 본문 (패스워드 인증 제거)
 # =============================
 CSV_URL = (
     "https://docs.google.com/spreadsheets/d/"
